@@ -3,8 +3,10 @@ using System.Text;
 
 public class WebSocketService
 {
-    private readonly ClientWebSocket _clientWebSocket = new ClientWebSocket();
+    protected readonly ClientWebSocket _clientWebSocket = new ClientWebSocket();
     private readonly string _uri;
+
+    public bool IsConnected { get; private set; } = false;
 
     public WebSocketService(string uri)
     {
@@ -18,6 +20,8 @@ public class WebSocketService
             Console.WriteLine($"Connecting to {_uri}...");
             await _clientWebSocket.ConnectAsync(new Uri(_uri), CancellationToken.None);
             Console.WriteLine("Connected.");
+
+            IsConnected = _clientWebSocket.State == WebSocketState.Open;
 
             await ReceiveMessagesAsync();
         }

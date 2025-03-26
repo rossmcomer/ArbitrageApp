@@ -1,6 +1,0 @@
-@ArbitrageApp_HostAddress = http://localhost:5052
-
-GET {{ArbitrageApp_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

@@ -1,41 +1,42 @@
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
-
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
+// Add your WebSocket connection code here
+var binanceService = new BinanceWebSocketService();
+var coinbaseService = new CoinbaseWebSocketService();
+var cryptoComService = new CryptoComWebSocketService();
 
-app.UseHttpsRedirection();
-
-var summaries = new[]
+// Start the WebSocket connections when the application starts
+app.Lifetime.ApplicationStarted.Register(async () =>
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+    await binanceService.ConnectAsync();
+    await binanceService.SubscribeToTicker("btcusdt");
 
-app.MapGet("/weatherforecast", () =>
+    // await coinbaseService.ConnectAsync();
+    // await coinbaseService.SubscribeToTicker("BTC-USD");
+
+    // await cryptoComService.ConnectAsync();
+    // await cryptoComService.SubscribeToTicker("BTC_USDT");
+});
+
+app.MapGet("/", () => "Welcome to ArbitrageApp!");
+
+// Example Endpoint: Check Binance Connection
+app.MapGet("/status/binance", () => new
 {
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+    Status = binanceService.IsConnected ? "Connected" : "Disconnected"
+});
+
+app.MapPost("/subscribe/binance/{symbol}", async (string symbol) =>
+{
+    if (!binanceService.IsConnected)
+    {
+        return Results.BadRequest("Not connected to Binance.");
+    }
+
+    await binanceService.SubscribeToTicker(symbol);
+    return Results.Ok($"Subscribed to {symbol} on Binance.");
+});
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
