@@ -21,7 +21,7 @@ namespace ArbitrageApp.Controllers
                 string responseBody = await response.Content.ReadAsStringAsync();
                 JsonDocument jsonDoc = JsonDocument.Parse(responseBody);
 
-                var coinPrice = new coinPriceModel
+                var coinPrice = new CoinPriceModel
                 {
                     Symbol = jsonDoc.RootElement.GetProperty("symbol").GetString(),
                     Price = jsonDoc.RootElement.GetProperty("price").GetString()

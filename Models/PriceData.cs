@@ -1,6 +1,6 @@
 namespace ArbitrageApp.Models
 {
-    public class coinPriceModel
+    public class CoinPriceModel
     {
         public string? Symbol { get; set; }
         public string? Price { get; set; }
