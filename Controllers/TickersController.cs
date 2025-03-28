@@ -1,3 +1,4 @@
+using ArbitrageApp.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ArbitrageApp.Controllers
@@ -8,7 +9,7 @@ namespace ArbitrageApp.Controllers
     {
         private readonly BinanceService _binanceService = binanceService;
 
-        [HttpGet("alltickers")]
+        [HttpGet("binancetickers")]
         public async Task<IActionResult> GetAllTickers()
         {
             try

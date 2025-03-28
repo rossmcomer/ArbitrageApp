@@ -1,3 +1,5 @@
+using ArbitrageApp.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<BinanceService>();
