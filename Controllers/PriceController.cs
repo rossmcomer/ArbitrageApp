@@ -11,7 +11,7 @@ namespace ArbitrageApp.Controllers
         private readonly HttpClient _client = client;
 
         [HttpGet("coin-price")]
-        public async Task<IActionResult> GetBtcPrice()
+        public async Task<IActionResult> GetCoinPrice()
         {
             try
             {
@@ -19,10 +19,13 @@ namespace ArbitrageApp.Controllers
 
                 var coinbasePrice = await GetCoinbasePrice();
 
+                var cryptoComPrice = await GetCryptoComPrice();
+
                 var response = new
                 {
                     BinancePrice = binancePrice,
-                    CoinbasePrice = coinbasePrice
+                    CoinbasePrice = coinbasePrice,
+                    CryptoComPrice = cryptoComPrice
                 };
 
                 return Ok(response);
@@ -58,8 +61,31 @@ namespace ArbitrageApp.Controllers
 
             return new CoinPriceModel
             {
-                Symbol = "BTCUSD", // Coinbase gives price in USD for BTC, so we can just set this manually
+                Symbol = "BTCUSD",
                 Price = jsonDoc.RootElement.GetProperty("data").GetProperty("amount").GetString() ?? string.Empty
+            };
+        }
+
+        private async Task<CoinPriceModel> GetCryptoComPrice()
+        {
+            HttpResponseMessage response = await _client.GetAsync("https://api.crypto.com/exchange/v1/public/get-tickers?instrument_name=BTCUSD-PERP");
+            response.EnsureSuccessStatusCode();
+
+            string responseBody = await response.Content.ReadAsStringAsync();
+            JsonDocument jsonDoc = JsonDocument.Parse(responseBody);
+
+            var price = jsonDoc.RootElement
+                       .GetProperty("result")
+                       .GetProperty("data")
+                       .EnumerateArray()
+                       .FirstOrDefault()
+                       .GetProperty("a")
+                       .GetString();
+
+            return new CoinPriceModel
+            {
+                Symbol = "BTCUSD-PERP",
+                Price = price ?? string.Empty
             };
         }
     }
