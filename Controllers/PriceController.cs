@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
+using ArbitrageApp.Models;
 
 namespace ArbitrageApp.Controllers
 {
@@ -19,9 +20,14 @@ namespace ArbitrageApp.Controllers
 
                 string responseBody = await response.Content.ReadAsStringAsync();
                 JsonDocument jsonDoc = JsonDocument.Parse(responseBody);
-                var price = jsonDoc.RootElement.GetProperty("price").GetString();
 
-                return Ok(new { price });
+                var coinPrice = new coinPriceModel
+                {
+                    Symbol = jsonDoc.RootElement.GetProperty("symbol").GetString(),
+                    Price = jsonDoc.RootElement.GetProperty("price").GetString()
+                };
+
+                return Ok(coinPrice);
             }
             catch (Exception ex)
             {
