@@ -1,13 +1,12 @@
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddHttpClient();
+builder.Services.AddControllers();
+
 var app = builder.Build();
 
-// Start the WebSocket connections when the application starts
-app.Lifetime.ApplicationStarted.Register(async () =>
-{
-    
-});
-
 app.MapGet("/", () => "Welcome to ArbitrageApp!");
+
+app.MapControllers();
 
 app.Run();
