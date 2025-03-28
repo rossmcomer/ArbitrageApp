@@ -1,37 +1,40 @@
 using System.Text.Json;
 using ArbitrageApp.Models;
 
-public class BinanceService
+namespace ArbitrageApp.Services
 {
-    private readonly HttpClient _client;
-
-    private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
+    public class BinanceService
     {
-        PropertyNameCaseInsensitive = true
-    };
+        private readonly HttpClient _client;
 
-    public BinanceService()
-    {
-        _client = new HttpClient();
-    }
-
-    public async Task<List<CoinPriceModel>> GetAllTickers()
-    {
-        HttpResponseMessage response = await _client.GetAsync("https://api.binance.us/api/v3/ticker/price");
-        
-        if (response.IsSuccessStatusCode)
+        private static readonly JsonSerializerOptions _jsonOptions = new()
         {
-            string responseBody = await response.Content.ReadAsStringAsync();
-            
-            var tickers = JsonSerializer.Deserialize<List<CoinPriceModel>>(responseBody, _jsonOptions) ?? [];
+            PropertyNameCaseInsensitive = true
+        };
 
-            
-            return tickers;   
-                                
+        public BinanceService()
+        {
+            _client = new HttpClient();
         }
-        else
+
+        public async Task<List<CoinPriceModel>> GetAllTickers()
         {
-            throw new HttpRequestException($"Error fetching tickers: {response.StatusCode}");
+            HttpResponseMessage response = await _client.GetAsync("https://api.binance.us/api/v3/ticker/price");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                string responseBody = await response.Content.ReadAsStringAsync();
+                
+                var tickers = JsonSerializer.Deserialize<List<CoinPriceModel>>(responseBody, _jsonOptions) ?? [];
+
+                
+                return tickers;   
+                                    
+            }
+            else
+            {
+                throw new HttpRequestException($"Error fetching tickers: {response.StatusCode}");
+            }
         }
     }
 }
