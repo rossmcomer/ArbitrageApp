@@ -9,11 +9,13 @@ namespace ArbitrageApp.Controllers
     {
         private readonly BinanceService _binanceService;
         private readonly CoinbaseService _coinbaseService;
+        private readonly CryptoComService _cryptoComService;
 
-        public TickersController(BinanceService binanceService, CoinbaseService coinbaseService)
+        public TickersController(BinanceService binanceService, CoinbaseService coinbaseService, CryptoComService cryptoComService)
         {
             _binanceService = binanceService;
             _coinbaseService = coinbaseService;
+            _cryptoComService = cryptoComService;
         }
 
         // Get tickers from Binance
@@ -38,6 +40,21 @@ namespace ArbitrageApp.Controllers
             try
             {
                 var tickers = await _coinbaseService.GetAllTickers();
+                return Ok(tickers);
+            }
+            catch (HttpRequestException ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        // Get tickers from Coinbase
+        [HttpGet("cryptocom")]
+        public async Task<IActionResult> GetAllCryptoComTickers()
+        {
+            try
+            {
+                var tickers = await _cryptoComService.GetAllTickers();
                 return Ok(tickers);
             }
             catch (HttpRequestException ex)

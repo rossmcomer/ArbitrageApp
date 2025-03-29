@@ -7,11 +7,6 @@ namespace ArbitrageApp.Services
     {
         private readonly HttpClient _client;
 
-        private static readonly JsonSerializerOptions _jsonOptions = new()
-        {
-            PropertyNameCaseInsensitive = true
-        };
-
         public CryptoComService()
         {
             _client = new HttpClient();
@@ -20,7 +15,7 @@ namespace ArbitrageApp.Services
         public async Task<List<CoinPriceModel>> GetAllTickers()
         {
             // Step 1: Get all tickers from Crypto.com
-            HttpResponseMessage response = await _client.GetAsync("https://api.crypto.com/v2/public/get-tickers");
+            HttpResponseMessage response = await _client.GetAsync("https://api.crypto.com/exchange/v1/public/get-tickers");
             if (!response.IsSuccessStatusCode)
             {
                 throw new HttpRequestException($"Error fetching tickers: {response.StatusCode}");

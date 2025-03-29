@@ -7,11 +7,6 @@ namespace ArbitrageApp.Services
     {
         private readonly HttpClient _client;
 
-        private static readonly JsonSerializerOptions _jsonOptions = new()
-        {
-            PropertyNameCaseInsensitive = true
-        };
-
         public CoinbaseService()
         {
             _client = new HttpClient();

@@ -4,6 +4,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<BinanceService>();
 builder.Services.AddSingleton<CoinbaseService>();
+builder.Services.AddSingleton<CryptoComService>();
 builder.Services.AddHttpClient();
 builder.Services.AddControllers();
 
