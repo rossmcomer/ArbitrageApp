@@ -19,7 +19,7 @@ namespace ArbitrageApp.Services
 
         public async Task<List<CoinPriceModel>> GetAllTickers()
         {
-            // Step 1: Get active trading pairs from Coinbase
+            // Step 1: Get active trading pairs with USD or USDC from Coinbase
             HttpResponseMessage productsResponse = await _client.GetAsync("https://api.exchange.coinbase.com/products");
             if (!productsResponse.IsSuccessStatusCode)
             {
@@ -29,34 +29,46 @@ namespace ArbitrageApp.Services
             string productsBody = await productsResponse.Content.ReadAsStringAsync();
             var productsJson = JsonDocument.Parse(productsBody);
 
-            // Filter only active markets
+            // Filter only active markets with USD or USDC as quote currency
             var activeSymbols = productsJson.RootElement
                 .EnumerateArray()
-                .Where(p => p.GetProperty("status").GetString() == "online") // Only active markets
-                .Select(p => p.GetProperty("id").GetString()) // Get the market symbol
+                .Where(p =>
+                    p.GetProperty("status").GetString() == "online" &&
+                    (p.GetProperty("quote_currency").GetString() == "USD" ||
+                     p.GetProperty("quote_currency").GetString() == "USDC")
+                )
+                .Select(p => p.GetProperty("id").GetString())
                 .ToHashSet();
 
-            // Step 2: Get current prices from the ticker endpoint
-            HttpResponseMessage response = await _client.GetAsync("https://api.exchange.coinbase.com/products/ticker");
-            if (!response.IsSuccessStatusCode)
+            if (activeSymbols.Count == 0)
             {
-                throw new HttpRequestException($"Error fetching tickers: {response.StatusCode}");
+                return [];
             }
 
-            string responseBody = await response.Content.ReadAsStringAsync();
-            var tickers = JsonSerializer.Deserialize<List<CoinPriceModel>>(responseBody, _jsonOptions) ?? new List<CoinPriceModel>();
+            Console.WriteLine(activeSymbols);
 
-            // Step 3: Filter tickers to only include active symbols
-            var activeTickers = tickers
-                .Where(t => t.Symbol != null && activeSymbols.Contains(t.Symbol))
-                .ToList();
+            // Step 2: Get current prices for each market using the ticker endpoint
+            var tickers = new List<CoinPriceModel>();
 
-            // Step 4: Filter for USD and USDT pairs
-            var usdTickers = activeTickers
-                .Where(t => (t.Symbol?.EndsWith("-USD") ?? false) || (t.Symbol?.EndsWith("-USDC") ?? false))
-                .ToList();
+            foreach (var symbol in activeSymbols)
+            {
+                HttpResponseMessage response = await _client.GetAsync($"https://api.exchange.coinbase.com/products/{symbol}/ticker");
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    string responseBody = await response.Content.ReadAsStringAsync();
+                    var priceJson = JsonDocument.Parse(responseBody);
 
-            return usdTickers;
+                    var price = priceJson.RootElement.GetProperty("price").GetString();
+                    tickers.Add(new CoinPriceModel
+                    {
+                        Symbol = symbol,
+                        Price = price ?? "0"
+                    });
+                }
+            }
+
+            return tickers;
         }
     }
 }

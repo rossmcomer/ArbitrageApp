@@ -28,7 +28,7 @@ namespace ArbitrageApp.Services
 
             string exchangeInfoBody = await exchangeInfoResponse.Content.ReadAsStringAsync();
             var exchangeInfoJson = JsonDocument.Parse(exchangeInfoBody);
-            
+
             var activeSymbols = exchangeInfoJson.RootElement
                 .GetProperty("symbols")
                 .EnumerateArray()
