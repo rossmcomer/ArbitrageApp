@@ -3,6 +3,7 @@ using ArbitrageApp.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<BinanceService>();
+builder.Services.AddSingleton<CoinbaseService>();
 builder.Services.AddHttpClient();
 builder.Services.AddControllers();
 

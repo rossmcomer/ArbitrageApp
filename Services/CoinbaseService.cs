@@ -53,7 +53,7 @@ namespace ArbitrageApp.Services
 
             // Step 4: Filter for USD and USDT pairs
             var usdTickers = activeTickers
-                .Where(t => (t.Symbol?.EndsWith("-USD") ?? false) || (t.Symbol?.EndsWith("-USDT") ?? false))
+                .Where(t => (t.Symbol?.EndsWith("-USD") ?? false) || (t.Symbol?.EndsWith("-USDC") ?? false))
                 .ToList();
 
             return usdTickers;
