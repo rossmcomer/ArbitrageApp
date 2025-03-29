@@ -4,18 +4,40 @@ using Microsoft.AspNetCore.Mvc;
 namespace ArbitrageApp.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
-    public class TickersController(BinanceService binanceService) : ControllerBase
+    [Route("api/tickers")]
+    public class TickersController : ControllerBase
     {
-        private readonly BinanceService _binanceService = binanceService;
+        private readonly BinanceService _binanceService;
+        private readonly CoinbaseService _coinbaseService;
 
-        [HttpGet("binancetickers")]
-        public async Task<IActionResult> GetAllTickers()
+        public TickersController(BinanceService binanceService, CoinbaseService coinbaseService)
+        {
+            _binanceService = binanceService;
+            _coinbaseService = coinbaseService;
+        }
+
+        // Get tickers from Binance
+        [HttpGet("binance")]
+        public async Task<IActionResult> GetAllBinanceTickers()
         {
             try
             {
                 var tickers = await _binanceService.GetAllTickers();
+                return Ok(tickers);
+            }
+            catch (HttpRequestException ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
 
+        // Get tickers from Coinbase
+        [HttpGet("coinbase")]
+        public async Task<IActionResult> GetAllCoinbaseTickers()
+        {
+            try
+            {
+                var tickers = await _coinbaseService.GetAllTickers();
                 return Ok(tickers);
             }
             catch (HttpRequestException ex)
