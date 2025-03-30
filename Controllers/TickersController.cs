@@ -103,7 +103,14 @@ namespace ArbitrageApp.Controllers
             try
             {
                 var tickers = await _coinbaseService.GetAllTickers();
-                return Ok(tickers);
+
+                var formattedTickers = tickers.Select(ticker => new
+                {
+                    Symbol = ticker.Symbol?.Replace("-", ""),
+                    ticker.Price
+                }).ToList();
+
+                return Ok(formattedTickers);
             }
             catch (HttpRequestException ex)
             {
