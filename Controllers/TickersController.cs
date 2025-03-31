@@ -88,13 +88,11 @@ namespace ArbitrageApp.Controllers
         {
             try
             {
-                var tickers = await _coinbaseService.GetAllTickers();
+                var tickers = await _coinbaseService.GetActiveSymbols();
 
-                var formattedTickers = tickers.Select(ticker => new
-                {
-                    Symbol = ticker.Symbol?.Replace("-", ""),
-                    ticker.Price
-                }).ToList();
+                var formattedTickers = tickers.Select(ticker =>
+                    ticker.Replace("-", "")
+                ).ToArray();
 
                 return Ok(formattedTickers);
             }
