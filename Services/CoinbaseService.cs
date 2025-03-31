@@ -35,10 +35,6 @@ namespace ArbitrageApp.Services
                 .Select(id => id!)
                 .ToHashSet();
                 
-            if (activeSymbols.Count == 0)
-            {
-                return [];
-            }
             return activeSymbols;
         }
 
