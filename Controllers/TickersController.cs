@@ -73,8 +73,9 @@ namespace ArbitrageApp.Controllers
         {
             try
             {
-                var tickers = await _binanceService.GetAllTickers();
-                return Ok(tickers);
+                var tickers = await _binanceService.GetActiveSymbols();
+                var tickersWithPrices = await _binanceService.GetPricesForSymbols(tickers);
+                return Ok(tickersWithPrices);
             }
             catch (HttpRequestException ex)
             {
