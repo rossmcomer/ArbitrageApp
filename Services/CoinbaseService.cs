@@ -12,9 +12,8 @@ namespace ArbitrageApp.Services
             _client = new HttpClient();
         }
 
-        public async Task<List<CoinPriceModel>> GetAllTickers()
+        public async Task<HashSet<string>> GetActiveSymbols()
         {
-            // Step 1: Get active trading pairs with USD or USDC from Coinbase
             HttpResponseMessage productsResponse = await _client.GetAsync("https://api.exchange.coinbase.com/products");
             if (!productsResponse.IsSuccessStatusCode)
             {
@@ -24,7 +23,6 @@ namespace ArbitrageApp.Services
             string productsBody = await productsResponse.Content.ReadAsStringAsync();
             var productsJson = JsonDocument.Parse(productsBody);
 
-            // Filter only active markets with USD or USDC as quote currency
             var activeSymbols = productsJson.RootElement
                 .EnumerateArray()
                 .Where(p =>
@@ -33,20 +31,25 @@ namespace ArbitrageApp.Services
                      p.GetProperty("quote_currency").GetString() == "USDC")
                 )
                 .Select(p => p.GetProperty("id").GetString())
+                .Where(id => id is not null)
+                .Select(id => id!)
                 .ToHashSet();
-
+                
             if (activeSymbols.Count == 0)
             {
                 return [];
             }
+            return activeSymbols;
+        }
 
-            // Step 2: Get current prices for each market using the ticker endpoint
+        public async Task<List<CoinPriceModel>> GetPricesForSymbols(IEnumerable<string> symbols)
+        {
             var tickers = new List<CoinPriceModel>();
 
-            foreach (var symbol in activeSymbols)
+            foreach (var symbol in symbols)
             {
                 HttpResponseMessage response = await _client.GetAsync($"https://api.exchange.coinbase.com/products/{symbol}/ticker");
-                
+
                 if (response.IsSuccessStatusCode)
                 {
                     string responseBody = await response.Content.ReadAsStringAsync();
