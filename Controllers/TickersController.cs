@@ -23,57 +23,43 @@ namespace ArbitrageApp.Controllers
         {
             try
             {
-                var binanceTickers = (await _binanceService.GetAllTickers())
-                    .Where(x => !string.IsNullOrEmpty(x.Symbol))
-                    .ToDictionary(x => x.Symbol!, x => x.Price);
+                var binanceResponse = await GetAllBinanceTickers();
 
-                var coinbaseTickers = (await _coinbaseService.GetAllTickers())
-                    .Where(x => !string.IsNullOrEmpty(x.Symbol))
-                    .ToDictionary(x => x.Symbol!, x => x.Price);
+                // var coinbaseTickers = await _coinbaseService.GetAllTickers();
 
-                var cryptoComTickers = (await _cryptoComService.GetAllTickers())
-                    .Where(x => !string.IsNullOrEmpty(x.Symbol))
-                    .ToDictionary(x => x.Symbol!, x => x.Price);
+                var cryptoComResponse = await GetAllCryptoComTickers();
 
-                var allSymbols = binanceTickers.Keys
-                                .Union(coinbaseTickers.Keys)
-                                .Union(cryptoComTickers.Keys);
+                if (binanceResponse is not OkObjectResult binanceResult || cryptoComResponse is not OkObjectResult cryptoComResult)
+                {
+                    return StatusCode(500, new { message = "Failed to retrieve tickers from one or both sources." });
+                }
 
-                Console.WriteLine(allSymbols);
+                if (binanceResult.Value is not IEnumerable<dynamic> binanceTickers || cryptoComResult.Value is not IEnumerable<dynamic> cryptoComTickers)
+                {
+                    return StatusCode(500, new { message = "Invalid ticker data format." });
+                }
 
-                // var opportunities = new List<object>();
+                static string Normalize(string symbol) => System.Text.RegularExpressions.Regex.Replace(symbol, "(USD|USDC|USDT)$", "");
 
-                // foreach (var symbol in allSymbols)
-                // {
-                //     binanceTickers.TryGetValue(symbol, out var binancePrice);
-                //     coinbaseTickers.TryGetValue(symbol, out var coinbasePrice);
-                //     cryptoComTickers.TryGetValue(symbol, out var cryptoComPrice);
+                var binanceDict = binanceTickers
+                    .GroupBy(t => Normalize(t.Symbol))
+                    .ToDictionary(g => g.Key, g => g.OrderBy(t => Convert.ToDecimal(t.Price)).First());
 
-                //     var prices = new List<decimal?> { binancePrice, coinbasePrice, cryptoComPrice }
-                //                     .Where(p => p.HasValue)
-                //                     .Select(p => p.Value)
-                //                     .ToList();
+                var cryptoComDict = cryptoComTickers
+                    .GroupBy(t => Normalize(t.Symbol))
+                    .ToDictionary(g => g.Key, g => g.OrderBy(t => Convert.ToDecimal(t.Price)).First());
 
-                //     if (prices.Count < 2) continue; // Skip if there are not enough prices to compare
+                // Find matching symbols and prepare result
+                var commonSymbols = binanceDict.Keys.Intersect(cryptoComDict.Keys);
 
-                //     var minPrice = prices.Min();
-                //     var maxPrice = prices.Max();
-                //     var percentDiff = ((maxPrice - minPrice) / minPrice) * 100;
+                var result = commonSymbols.Select(symbol => new
+                {
+                    Symbol = symbol,
+                    BinancePrice = binanceDict[symbol].Price,
+                    CryptoComPrice = cryptoComDict[symbol].Price
+                }).ToList();
 
-                //     if (percentDiff >= 1)
-                //     {
-                //         opportunities.Add(new
-                //         {
-                //             Symbol = symbol,
-                //             BinancePrice = binancePrice,
-                //             CoinbasePrice = coinbasePrice,
-                //             CryptoComPrice = cryptoComPrice,
-                //             PercentDifference = percentDiff
-                //         });
-                //     }
-                // }
-
-                return Ok(allSymbols);
+                return Ok(result);
             }
             catch (HttpRequestException ex)
             {

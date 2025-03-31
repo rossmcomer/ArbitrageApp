@@ -40,8 +40,6 @@ namespace ArbitrageApp.Services
                 return [];
             }
 
-            Console.WriteLine(activeSymbols);
-
             // Step 2: Get current prices for each market using the ticker endpoint
             var tickers = new List<CoinPriceModel>();
 

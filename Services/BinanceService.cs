@@ -44,7 +44,7 @@ namespace ArbitrageApp.Services
             }
 
             string responseBody = await response.Content.ReadAsStringAsync();
-            var tickers = JsonSerializer.Deserialize<List<CoinPriceModel>>(responseBody, _jsonOptions) ?? new List<CoinPriceModel>();
+            var tickers = JsonSerializer.Deserialize<List<CoinPriceModel>>(responseBody, _jsonOptions) ?? [];
 
             // Step 3: Filter tickers to only include active symbols
             var activeTickers = tickers
