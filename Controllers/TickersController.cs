@@ -19,52 +19,19 @@ namespace ArbitrageApp.Controllers
         }
 
         [HttpGet("arbitrage")]
-        public async Task<IActionResult> GetArbitrageOpportunities()
+        public async Task GetArbitrageOpportunities()
         {
-            try
-            {
-                var binanceResponse = await GetAllBinanceTickers();
+            
+                var binanceResponse = await _binanceService.GetActiveSymbols();
 
-                // var coinbaseTickers = await _coinbaseService.GetAllTickers();
+                var cryptoComResponse = await _cryptoComService.GetActiveSymbols();
 
-                var cryptoComResponse = await GetAllCryptoComTickers();
+                var coinbaseTickers = await _coinbaseService.GetActiveSymbols();
 
-                if (binanceResponse is not OkObjectResult binanceResult || cryptoComResponse is not OkObjectResult cryptoComResult)
-                {
-                    return StatusCode(500, new { message = "Failed to retrieve tickers from one or both sources." });
-                }
+                Console.WriteLine(string.Join(", ", binanceResponse));
 
-                if (binanceResult.Value is not IEnumerable<dynamic> binanceTickers || cryptoComResult.Value is not IEnumerable<dynamic> cryptoComTickers)
-                {
-                    return StatusCode(500, new { message = "Invalid ticker data format." });
-                }
-
-                static string Normalize(string symbol) => System.Text.RegularExpressions.Regex.Replace(symbol, "(USD|USDC|USDT)$", "");
-
-                var binanceDict = binanceTickers
-                    .GroupBy(t => Normalize(t.Symbol))
-                    .ToDictionary(g => g.Key, g => g.OrderBy(t => Convert.ToDecimal(t.Price)).First());
-
-                var cryptoComDict = cryptoComTickers
-                    .GroupBy(t => Normalize(t.Symbol))
-                    .ToDictionary(g => g.Key, g => g.OrderBy(t => Convert.ToDecimal(t.Price)).First());
-
-                // Find matching symbols and prepare result
-                var commonSymbols = binanceDict.Keys.Intersect(cryptoComDict.Keys);
-
-                var result = commonSymbols.Select(symbol => new
-                {
-                    Symbol = symbol,
-                    BinancePrice = binanceDict[symbol].Price,
-                    CryptoComPrice = cryptoComDict[symbol].Price
-                }).ToList();
-
-                return Ok(result);
-            }
-            catch (HttpRequestException ex)
-            {
-                return StatusCode(500, new { message = ex.Message });
-            }
+                
+            
         }
 
         // Get tickers from Binance
@@ -91,11 +58,9 @@ namespace ArbitrageApp.Controllers
             {
                 var tickers = await _coinbaseService.GetActiveSymbols();
 
-                var formattedTickers = tickers.Select(ticker =>
-                    ticker.Replace("-", "")
-                ).ToArray();
+                var tickersWithPrices = await _coinbaseService.GetPricesForSymbols(tickers);
 
-                return Ok(formattedTickers);
+                return Ok(tickersWithPrices);
             }
             catch (HttpRequestException ex)
             {
@@ -109,15 +74,9 @@ namespace ArbitrageApp.Controllers
         {
             try
             {
-                var tickers = await _cryptoComService.GetAllTickers();
+                var tickers = await _cryptoComService.GetActiveSymbols();
 
-                var formattedTickers = tickers.Select(ticker => new
-                {
-                    Symbol = ticker.Symbol?.Replace("_", ""),
-                    ticker.Price
-                }).ToList();
-
-                return Ok(formattedTickers);
+                return Ok(tickers);
             }
             catch (HttpRequestException ex)
             {

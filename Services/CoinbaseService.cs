@@ -48,6 +48,8 @@ namespace ArbitrageApp.Services
 
             foreach (var symbol in symbols)
             {
+                var formattedSymbol = symbol.Replace("-", "");
+
                 HttpResponseMessage response = await _client.GetAsync($"https://api.exchange.coinbase.com/products/{symbol}/ticker");
 
                 if (response.IsSuccessStatusCode)
@@ -58,7 +60,7 @@ namespace ArbitrageApp.Services
                     var price = priceJson.RootElement.GetProperty("price").GetString();
                     tickers.Add(new CoinPriceModel
                     {
-                        Symbol = symbol,
+                        Symbol = formattedSymbol,
                         Price = price ?? "0"
                     });
                 }

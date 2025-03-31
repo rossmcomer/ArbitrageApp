@@ -12,7 +12,7 @@ namespace ArbitrageApp.Services
             _client = new HttpClient();
         }
 
-        public async Task<List<CoinPriceModel>> GetAllTickers()
+        public async Task<List<CoinPriceModel>> GetActiveSymbols()
         {
             // Step 1: Get all tickers from Crypto.com
             HttpResponseMessage response = await _client.GetAsync("https://api.crypto.com/exchange/v1/public/get-tickers");
@@ -38,7 +38,13 @@ namespace ArbitrageApp.Services
                 .Where(t => (t.Symbol?.EndsWith("USD") ?? false) || (t.Symbol?.EndsWith("USDT") ?? false ))
                 .ToList();
 
-            return usdTickers;
+            var formattedTickers = usdTickers.Select(ticker => new CoinPriceModel
+            {
+                Symbol = ticker.Symbol?.Replace("_", ""),
+                Price = ticker.Price
+            }).ToList();
+
+            return formattedTickers;
         }
     }
 }
