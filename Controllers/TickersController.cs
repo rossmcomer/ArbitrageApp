@@ -1,5 +1,6 @@
 using ArbitrageApp.Services;
 using Microsoft.AspNetCore.Mvc;
+using ArbitrageApp.Models;
 
 namespace ArbitrageApp.Controllers
 {
@@ -66,14 +67,15 @@ namespace ArbitrageApp.Controllers
 
             var finalDictionary = allSymbols.ToDictionary(
                 x => x.NormalizedSymbol,
-                x => new
+                x => new ArbitrageOpportunity
                 {
                     BinancePrice = binancePrices
                         .FirstOrDefault(b => Normalize(b.Symbol ?? string.Empty) == x.NormalizedSymbol)?.Price,
                     CoinbasePrice = coinbasePrices
                         .FirstOrDefault(c => Normalize(c.Symbol ?? string.Empty) == x.NormalizedSymbol)?.Price,
                     CryptoComPrice = cryptoComSymbolsPreFormat
-                        .FirstOrDefault(cc => Normalize(cc.Symbol ?? string.Empty) == x.NormalizedSymbol)?.Price
+                        .FirstOrDefault(cc => Normalize(cc.Symbol ?? string.Empty) == x.NormalizedSymbol)?.Price,
+                    PercentDiff = 0m
                 }
             );
 
@@ -95,11 +97,16 @@ namespace ArbitrageApp.Controllers
                     var minPrice = prices.Min();
                     var maxPrice = prices.Max();
 
-                    return (maxPrice - minPrice) / minPrice >= 0.01m; // Check if difference is 1% or more
+                    var percentDiff = (maxPrice - minPrice) / minPrice * 100; // Check if difference is 1% or more
+
+                    kv.Value.PercentDiff = percentDiff;
+
+                    return percentDiff >= 1;
                 })
+                .OrderByDescending(kv => kv.Value.PercentDiff) // Sort by percentDiff in descending order
                 .ToDictionary(kv => kv.Key, kv => kv.Value);
 
-            return Ok(finalDictionary);            
+            return Ok(arbitrageOpportunities);            
         }
 
         // Get tickers from Binance
