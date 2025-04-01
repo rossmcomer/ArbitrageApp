@@ -76,7 +76,29 @@ namespace ArbitrageApp.Controllers
                         .FirstOrDefault(cc => Normalize(cc.Symbol ?? string.Empty) == x.NormalizedSymbol)?.Price
                 }
             );
-            
+
+            var arbitrageOpportunities = finalDictionary
+                .Where(kv =>
+                {
+                    bool TryParsePrice(string? priceStr, out decimal price) =>
+                        decimal.TryParse(priceStr, out price);
+
+                    var prices = new List<decimal>();
+
+                    if (TryParsePrice(kv.Value.BinancePrice, out var binancePrice)) prices.Add(binancePrice);
+                    if (TryParsePrice(kv.Value.CoinbasePrice, out var coinbasePrice)) prices.Add(coinbasePrice);
+                    if (TryParsePrice(kv.Value.CryptoComPrice, out var cryptoComPrice)) prices.Add(cryptoComPrice);
+
+                    if (prices.Count < 2)
+                        return false; // Need at least 2 prices to compare
+
+                    var minPrice = prices.Min();
+                    var maxPrice = prices.Max();
+
+                    return (maxPrice - minPrice) / minPrice >= 0.01m; // Check if difference is 1% or more
+                })
+                .ToDictionary(kv => kv.Key, kv => kv.Value);
+
             return Ok(finalDictionary);            
         }
 
