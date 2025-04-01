@@ -50,9 +50,34 @@ namespace ArbitrageApp.Controllers
                         ? value : null
                 })
                 .ToArray();
-
-            return Ok(allSymbols);  
             
+            var coinbaseSymbolsToFetch = allSymbols
+                .Where(x => x.OriginalCoinbaseSymbol != null)
+                .Select(x => x.OriginalCoinbaseSymbol!)
+                .ToList();
+            
+            var coinbasePrices = await _coinbaseService.GetPricesForSymbols(coinbaseSymbolsToFetch);
+
+            var binanceSymbolsToFetch = binanceSymbols
+                .Where(symbol => allSymbols.Any(s => s.NormalizedSymbol == Normalize(symbol)))
+                .ToHashSet();
+
+            var binancePrices = await _binanceService.GetPricesForSymbols(binanceSymbolsToFetch);
+
+            var finalDictionary = allSymbols.ToDictionary(
+                x => x.NormalizedSymbol,
+                x => new
+                {
+                    BinancePrice = binancePrices
+                        .FirstOrDefault(b => Normalize(b.Symbol ?? string.Empty) == x.NormalizedSymbol)?.Price,
+                    CoinbasePrice = coinbasePrices
+                        .FirstOrDefault(c => Normalize(c.Symbol ?? string.Empty) == x.NormalizedSymbol)?.Price,
+                    CryptoComPrice = cryptoComSymbolsPreFormat
+                        .FirstOrDefault(cc => Normalize(cc.Symbol ?? string.Empty) == x.NormalizedSymbol)?.Price
+                }
+            );
+            
+            return Ok(finalDictionary);            
         }
 
         // Get tickers from Binance

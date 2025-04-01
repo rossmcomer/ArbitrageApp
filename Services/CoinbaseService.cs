@@ -44,14 +44,14 @@ namespace ArbitrageApp.Services
 
             foreach (var symbol in symbols)
             {
-                var formattedSymbol = symbol.Replace("-", "");
-
                 HttpResponseMessage response = await _client.GetAsync($"https://api.exchange.coinbase.com/products/{symbol}/ticker");
 
                 if (response.IsSuccessStatusCode)
                 {
                     string responseBody = await response.Content.ReadAsStringAsync();
                     var priceJson = JsonDocument.Parse(responseBody);
+
+                    var formattedSymbol = symbol.Replace("-", "");
 
                     var price = priceJson.RootElement.GetProperty("price").GetString();
                     tickers.Add(new CoinPriceModel
