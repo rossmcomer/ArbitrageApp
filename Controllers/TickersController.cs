@@ -11,12 +11,14 @@ namespace ArbitrageApp.Controllers
         private readonly BinanceService _binanceService;
         private readonly CoinbaseService _coinbaseService;
         private readonly CryptoComService _cryptoComService;
+        private readonly KrakenService _krakenService;
 
-        public TickersController(BinanceService binanceService, CoinbaseService coinbaseService, CryptoComService cryptoComService)
+        public TickersController(BinanceService binanceService, CoinbaseService coinbaseService, CryptoComService cryptoComService, KrakenService krakenService)
         {
             _binanceService = binanceService;
             _coinbaseService = coinbaseService;
             _cryptoComService = cryptoComService;
+            _krakenService = krakenService;
         }
 
         [HttpGet("arbitrage")]
@@ -150,6 +152,22 @@ namespace ArbitrageApp.Controllers
             try
             {
                 var tickers = await _cryptoComService.GetActiveSymbols();
+
+                return Ok(tickers);
+            }
+            catch (HttpRequestException ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        // Get tickers from Coinbase
+        [HttpGet("kraken")]
+        public async Task<IActionResult> GetAllKrakenTickers()
+        {
+            try
+            {
+                var tickers = await _krakenService.GetActiveSymbols();
 
                 return Ok(tickers);
             }
