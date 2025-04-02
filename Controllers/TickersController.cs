@@ -1,6 +1,7 @@
 using ArbitrageApp.Services;
 using Microsoft.AspNetCore.Mvc;
 using ArbitrageApp.Models;
+using Microsoft.AspNetCore.Components.Forms;
 
 namespace ArbitrageApp.Controllers
 {
@@ -32,6 +33,8 @@ namespace ArbitrageApp.Controllers
 
             var cryptoComSymbolsPreFormat = await _cryptoComService.GetActiveSymbols(); //[{"symbol": "BTCUSDT", "price": "0.021590"},{"symbol": "ETHUSDT", "price": "0.040090"}]
 
+            var KrakenSymbols = await _krakenService.GetActiveSymbols(); //[{"symbol": "BTCUSDT", "price": "0.021590"},{"symbol": "ETHUSDT", "price": "0.040090"}]
+
             var coinbaseSymbolMap = coinbaseSymbolsPreFormat
                 .GroupBy(symbol => Normalize(symbol.Replace("-", "")))  // Normalize and group by symbol
                 .ToDictionary(group => group.Key, group => group.First());
@@ -44,6 +47,7 @@ namespace ArbitrageApp.Controllers
                 .Select(symbol => Normalize(symbol))  // Normalize Binance symbols
                 .Concat(coinbaseSymbolMap.Keys)       // Use the normalized Coinbase symbols
                 .Concat(cryptoComSymbols)             // Add the normalized Crypto.com symbols
+                .Concat(Kr)
                 .GroupBy(symbol => symbol)           // Group by normalized symbol
                 .Where(group => group.Count() >= 2)  // Filter symbols that appear in 2 or more sources
                 .Select(group => new
