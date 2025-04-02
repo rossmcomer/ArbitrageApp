@@ -33,7 +33,7 @@ namespace ArbitrageApp.Controllers
 
             var cryptoComSymbolsPreFormat = await _cryptoComService.GetActiveSymbols(); //[{"symbol": "BTCUSDT", "price": "0.021590"},{"symbol": "ETHUSDT", "price": "0.040090"}]
 
-            var KrakenSymbols = await _krakenService.GetActiveSymbols(); //[{"symbol": "BTCUSDT", "price": "0.021590"},{"symbol": "ETHUSDT", "price": "0.040090"}]
+            var krakenSymbolsPreFormat = await _krakenService.GetActiveSymbols(); //[{"symbol": "BTCUSDT", "price": "0.021590"},{"symbol": "ETHUSDT", "price": "0.040090"}]
 
             var coinbaseSymbolMap = coinbaseSymbolsPreFormat
                 .GroupBy(symbol => Normalize(symbol.Replace("-", "")))  // Normalize and group by symbol
@@ -43,11 +43,15 @@ namespace ArbitrageApp.Controllers
                 .Select(item => Normalize(item.Symbol ?? string.Empty))  // Normalize Crypto.com symbols
                 .ToHashSet();
 
+            var krakenSymbols = krakenSymbolsPreFormat
+                .Select(item => Normalize(item.Symbol ?? string.Empty))  // Normalize Kraken.com symbols
+                .ToHashSet();
+
             var allSymbols = binanceSymbols
                 .Select(symbol => Normalize(symbol))  // Normalize Binance symbols
                 .Concat(coinbaseSymbolMap.Keys)       // Use the normalized Coinbase symbols
                 .Concat(cryptoComSymbols)             // Add the normalized Crypto.com symbols
-                .Concat(Kr)
+                .Concat(krakenSymbols)                  //Add the normalized Kraken.com symbols
                 .GroupBy(symbol => symbol)           // Group by normalized symbol
                 .Where(group => group.Count() >= 2)  // Filter symbols that appear in 2 or more sources
                 .Select(group => new
@@ -81,6 +85,8 @@ namespace ArbitrageApp.Controllers
                         .FirstOrDefault(c => Normalize(c.Symbol ?? string.Empty) == x.NormalizedSymbol)?.Price,
                     CryptoComPrice = cryptoComSymbolsPreFormat
                         .FirstOrDefault(cc => Normalize(cc.Symbol ?? string.Empty) == x.NormalizedSymbol)?.Price,
+                    KrakenPrice = krakenSymbolsPreFormat
+                        .FirstOrDefault(cc => Normalize(cc.Symbol ?? string.Empty) == x.NormalizedSymbol)?.Price,
                     PercentDiff = 0m
                 }
             );
@@ -96,12 +102,16 @@ namespace ArbitrageApp.Controllers
                     if (TryParsePrice(kv.Value.BinancePrice, out var binancePrice)) prices.Add(binancePrice);
                     if (TryParsePrice(kv.Value.CoinbasePrice, out var coinbasePrice)) prices.Add(coinbasePrice);
                     if (TryParsePrice(kv.Value.CryptoComPrice, out var cryptoComPrice)) prices.Add(cryptoComPrice);
+                    if (TryParsePrice(kv.Value.KrakenPrice, out var krakenPrice)) prices.Add(krakenPrice);
 
                     if (prices.Count < 2)
                         return false; // Need at least 2 prices to compare
 
                     var minPrice = prices.Min();
                     var maxPrice = prices.Max();
+
+                    if (minPrice == 0)
+                        return false;
 
                     var percentDiff = (maxPrice - minPrice) / minPrice * 100; // Check if difference is 1% or more
 
