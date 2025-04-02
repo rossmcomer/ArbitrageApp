@@ -10,7 +10,7 @@ namespace ArbitrageApp.Controllers
     {
         private readonly HttpClient _client = client;
 
-        [HttpGet("coin-price")]
+        [HttpGet("BTC-price")]
         public async Task<IActionResult> GetCoinPrice()
         {
             try
