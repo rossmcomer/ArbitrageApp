@@ -94,6 +94,9 @@ namespace ArbitrageApp.Controllers
             var arbitrageOpportunities = finalDictionary
                 .Where(kv =>
                 {
+                    if (kv.Key.Equals("VELO", StringComparison.OrdinalIgnoreCase)) 
+                        return false;
+
                     bool TryParsePrice(string? priceStr, out decimal price) =>
                         decimal.TryParse(priceStr, out price);
 
