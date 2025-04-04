@@ -1,7 +1,6 @@
 using ArbitrageApp.Services;
 using Microsoft.AspNetCore.Mvc;
 using ArbitrageApp.Models;
-using Microsoft.AspNetCore.Components.Forms;
 
 namespace ArbitrageApp.Controllers
 {
