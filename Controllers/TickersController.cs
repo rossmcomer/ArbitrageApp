@@ -78,7 +78,7 @@ namespace ArbitrageApp.Controllers
                 x => x.NormalizedSymbol,
                 x => new ArbitrageOpportunity
                 {
-                    NormalizedSymbol = x.NormalizedSymbol,
+                    Symbol = x.NormalizedSymbol,
                     BinancePrice = binancePrices
                         .FirstOrDefault(b => Normalize(b.Symbol ?? string.Empty) == x.NormalizedSymbol)?.Price,
                     CoinbasePrice = coinbasePrices

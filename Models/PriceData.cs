@@ -9,7 +9,7 @@ namespace ArbitrageApp.Models
     public class ArbitrageOpportunity
 {
     public int Id { get; set; }
-    public string NormalizedSymbol { get; set; } = string.Empty;
+    public string Symbol { get; set; } = string.Empty;
     public string? BinancePrice { get; set; }
     public string? CoinbasePrice { get; set; }
     public string? CryptoComPrice { get; set; }
