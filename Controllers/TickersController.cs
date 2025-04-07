@@ -1,6 +1,7 @@
 using ArbitrageApp.Services;
 using Microsoft.AspNetCore.Mvc;
 using ArbitrageApp.Models;
+using ArbitrageApp.Data;
 
 namespace ArbitrageApp.Controllers
 {
@@ -124,6 +125,13 @@ namespace ArbitrageApp.Controllers
                 })
                 .OrderByDescending(kv => kv.Value.PercentDiff) // Sort by percentDiff in descending order
                 .ToDictionary(kv => kv.Key, kv => kv.Value);
+
+                using (var scope = HttpContext.RequestServices.CreateScope())
+                {
+                    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                    dbContext.ArbitrageOpportunities.AddRange(arbitrageOpportunities.Values);
+                    await dbContext.SaveChangesAsync();
+                }
 
             return Ok(arbitrageOpportunities);            
         }
